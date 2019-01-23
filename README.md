@@ -1,5 +1,5 @@
 # rinetdweb
-rinet代理web界面<br />
+rinet代理web界面,适用于Centos/Redhat系列系统，Debian或Other请自行测试<br />
 # 使用方法：<br />
 #在Linux系统输入下面的命令，一行一个：<br />
 #安装依赖<br />
