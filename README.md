@@ -18,6 +18,10 @@ make && make install<br />
 yum install python-pip python-devel uwsgi<br />
 #安装web.py<br />
 pip install web.py<br />
+<br />
+# 运行程序<br />
+git clone https://github.com/xmapst/rinetdweb.git<br />
+cd rinetdweb<br />
+uwsgi --http 0.0.0.0:9000 -w webserver
 
-#运行程序
-git clone 
+# 浏览器打开
