@@ -25,3 +25,4 @@ cd rinetdweb<br />
 uwsgi --http 0.0.0.0:9000 -w webserver
 # 浏览器打开
 http://youripaddr:9000
+![](https://github.com/xmapst/rinetdweb/blob/master/rinted.jpg)
