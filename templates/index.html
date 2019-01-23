@@ -1,0 +1,87 @@
+$def with(result, status, port_state, msg)
+<html lang="zh-cn">
+<head>
+<meta charset="utf-8"/>
+<title>Rinted端口转发</title>
+</head>
+<body align="center" bgcolor="#F0F8FF">
+    <p><strong>rinted端口转发</strong></p>
+    <table align="center" border="1" cellspacing="0" cellpadding="3"> 
+        <thead align="center" valign="top"> 
+            <tr> 
+                <td colspan="2">SocIP</td> 
+                <td>SocPort</td> 
+                <td>DesIP</td> 
+                <td>DecPort</td> 
+                <td>操作</td> 
+            </tr>
+            <tr> 
+                <form action="/add" method="post">
+                    <td>&nbsp;</td>
+                    <td><input type="text" readonly name="SocIP" size="15" maxlength="15" value="0.0.0.0"/></td> 
+                    <td><input type="text" name="SocPort" size="5" maxlength="5"/></td> 
+                    <td><input type="text" name="DesIP" size="15" maxlength="15"/></td> 
+                    <td><input type="text" name="DesPort" size="5" maxlength="5"/></td> 
+                    <td><input type="submit" value="添加" /></td> 
+                </form>
+            </tr>
+        </thead>
+        <tbody align="center" valign="top"> 
+            <tr align="center">
+                <td >ID</td>
+                <td colspan="5">已存在的记录</td>
+            </tr>
+            $for k,v in result.items():
+            <tr>
+            <form action="/del" method="post">
+                <td>$k</td>
+                    <td><input type="hidden" name="SocIP" value="$v['SocIP']"/>$v['SocIP']</td>
+                    <td><input type="hidden" name="SocPort" value="$v['SocPort']"/>$v['SocPort']</td>
+                    <td><input type="hidden" name="DesIP" value="$v['DesIP']"/>$v['DesIP']</td>
+                    <td><input type="hidden" name="DesPort" value="$v['DesPort']"/>$v['DesPort']</td>
+                <td><input type="submit" value="删除" /></td>
+                </form>
+            </tr>
+        </tbody>
+        <tfoot align="center" valign="top">
+            <tr align="center">
+                <td>&nbsp;</td>
+                <td colspan="1">状态：
+                $if status:
+                    $status
+                $else:
+                    &nbsp;
+                </td>
+                <td colspan="2">
+                $if msg:
+                    $msg
+                $else:
+                    &nbsp;
+                </td>
+                <form action="" method="post">
+                <td colspan="2">
+                    <input type="submit" value="启动rinted" formaction="/op?pm=start"/>
+                    &nbsp;
+                    <input type="submit" value="停止rinted" formaction="/op?pm=stop"/>
+                    <input type="submit" value="加载配置" formaction="/op?pm=reload"/></td>
+                </form>
+            </tr>
+        </tfoot>
+    </table>
+    &nbsp;<br />
+    <table align="center" border="1" cellspacing="0" cellpadding="3">
+        <thead align="center" valign="top">
+            <tr><td colspan="6"><p><strong>正在运行的端口</strong></p></td></tr>
+        </thead>
+        <tbody align="left" valign="top" bgcolor="#000000" >
+            <tr><td colspan="6" style="color:#FFFFFF";><pre>
+            $if port_state:
+                $for line in port_state:
+                    $line
+            $else:
+                &nbsp;
+            </pre></td></tr>
+        </tbody>
+    </table>
+</body>
+</html>

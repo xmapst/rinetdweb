@@ -1,0 +1,56 @@
+#!/bin/bash
+# chkconfig:   2345 90 10
+# description: rinetd Server
+
+EXEC=/usr/sbin/rinetd
+CONF=$1
+PID_FILE=/var/run/rinetd.pid
+NAME=Rinetd
+DESC="Rinetd Server"
+
+[ -f \$sysconfig ] && . \$sysconfig 
+
+case "$2" in
+    start)
+        if [ -x "$PID_FILE" ]; then
+            echo "$NAME is running ..."
+            exit 0
+        fi
+ 
+        $EXEC -c $CONF
+ 
+        echo -e "\e[1;32m$NAME is running\e[0m"
+    ;;
+    stop)
+        if [ -f "$PID_FILE" ]; then
+            kill `cat $PID_FILE`
+ 
+            while [ -x "$PID_FILE" ]
+            do
+                echo "Waiting for $NAME to shutdown..."  
+                sleep 1
+            done
+ 
+            rm -f $PID_FILE
+        fi
+ 
+        echo -e "\e[1;31m$NAME stopped.\e[0m"
+    ;;
+    restart)
+        $0 $CONF stop
+        $0 $CONF start
+    ;;
+    status)
+        if [ -f $PID_FILE ]; then
+            echo "$NAME is running ..."
+        else
+            echo "$NAME stopped."
+        fi
+    ;;
+    *)
+        echo $"Usage: $0 {start|stop|restart|status}"
+        exit 2
+    ;;
+esac
+ 
+exit 0
