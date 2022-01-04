@@ -21,6 +21,8 @@ import shlex
 render = web.template.render('templates/')
 rinstate, rinetd_bin = commands.getstatusoutput('which rinetd')
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CONF = "conf/rinetd.conf"
+PID = """ps -elf |grep rinetd|grep -v grep |awk '{print $4}'"""
 
 if rinstate != 0:
     print("rinetd is not find")
@@ -38,7 +40,9 @@ app = web.application(urls, globals())
 def getConf():
     i = 0
     result = {}
-    for line in fileinput.input("conf/rinetd.conf", inplace=1):
+    with open( CONF, 'r') as fobj:
+        lines = fobj.readlines()
+    for line in lines:
         line = line.strip('\n')
         result[i] = line
         i += 1
@@ -48,11 +52,10 @@ def getConf():
     for line in result.keys():
         v = str(result[line]).split()
         result[line] = dict(zip(k, v))
-    fileinput.close()
     return result
 
 def rinetd_state():
-    pid = commands.getoutput('cat conf/rinetd.pid')
+    pid = commands.getoutput(PID)
     if pid == "":
         return "Rinetd已停止"
     else:
@@ -84,8 +87,8 @@ class Add():
                     return render.index(result, status, port_state, msg)
 
             new_result = "%s %s %s %s" % (form['SocIP'], form['SocPort'], form['DesIP'], form['DesPort'])
-            with open("conf/rinetd.conf", mode='a') as data:
-                data.write(new_result)
+            with open(CONF, mode='a') as data:
+                data.write(new_result.encode("utf-8") + '\n')
             msg = "添加成功"
             return render.index(result, status, port_state, msg)
         else:
@@ -103,13 +106,21 @@ class Del():
         for line in result.values():
             lists.append(line['SocPort'])
         if form['SocIP'] != "" and form['SocPort'] != "" and form['DesIP'] != "" and form['DesPort'] != "":
-            for line in fileinput.input("conf/rinetd.conf", inplace=1):
+            with open( CONF, 'r') as fobj:
+                lines = fobj.readlines()
+            for line in lines:
                 line = line.strip('\n')
                 new_result = line.split(" ")[1]
                 if form['SocPort'] in lists and form['SocPort'] == new_result:
-                    continue
+                    count = 0
+                    while count < len(lines):
+                        if  len(lines[count]) > 2 and new_result == lines[count].split(" ")[1]:
+                            lines.pop(count)
+                        else:
+                            count += 1
+                    with open( CONF, 'w') as wobj:
+                        wobj.writelines(lines)
                 print line
-            fileinput.close()
             msg = "删除成功"
             return render.index(result, status, port_state, msg)
         else:
@@ -121,49 +132,24 @@ class Operate():
         form = web.input()
         result = getConf() 
         if form['pm'] == 'start':
-            pid = commands.getoutput('cat conf/rinetd.pid')
+            pid = commands.getoutput(PID)
             if pid != "":
                 raise web.seeother('/')
-            #args = shlex.split('%s -c %s/conf/rinetd.conf' % (rinetd_bin, BASE_DIR))
-            stats = subprocess.Popen('%s -c conf/rinetd.conf' % rinetd_bin, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
-            with open("conf/rinetd.pid", mode='w') as data:
-                data.write(str(stats.pid)) 
-                data.close()
-
+            stats = subprocess.Popen( rinetd_bin + ' -c ' + CONF + ' &' , shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
             time.sleep(0.3) 
-            #status = rinetd_state()
-            #port_state = commands.getoutput('netstat -lnt').split("\n")
-            #msg = "启动成功"
-            #return render.index(result, status, port_state, msg)
             raise web.seeother('/')
         elif form['pm'] == 'stop':
-            pid = commands.getoutput('cat conf/rinetd.pid')
+            pid = commands.getoutput(PID)
             if pid == "":
                 raise web.seeother('/')
             commands.getstatusoutput('killall rinetd')
-            commands.getoutput('> conf/rinetd.pid')
-            
-            #status = rinetd_state()
-            #port_state = commands.getoutput('netstat -lnt').split("\n")
-            #msg = "停止成功"
-            #return render.index(result, status, port_state, msg)
             raise web.seeother('/')
         elif form['pm'] == 'reload':
-            pid = commands.getoutput('cat conf/rinetd.pid')
+            pid = commands.getoutput(PID)
             if pid == "":
                 raise web.seeother('/')
-            commands.getstatusoutput('killall rinetd')
-            commands.getoutput('> conf/rinetd.pid')
-            #args = shlex.split('%s -c %s/conf/rinetd.conf' % (rinetd_bin, BASE_DIR))
-            stats = subprocess.Popen('%s -c conf/rinetd.conf' % rinetd_bin, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
-            with open("conf/rinetd.pid", mode='w') as data:
-                data.write(str(stats.pid)) 
-            
+            commands.getstatusoutput("kill -1 `ps -elf |grep rinetd|grep -v grep |awk '{print $4}'`")
             time.sleep(0.3)
-            #status = rinetd_state()
-            #port_state = commands.getoutput('netstat -lnt').split("\n")
-            #msg = "加载成功"
-            #return render.index(result, status, port_state, msg)
             raise web.seeother('/')
 
 application = app.wsgifunc()
